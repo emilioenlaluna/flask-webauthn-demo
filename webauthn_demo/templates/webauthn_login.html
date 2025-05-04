@@ -12,19 +12,20 @@
 
 {% block modules %}
 <script type="module">
-import { get } from "https://cdn.skypack.dev/@github/webauthn-json";
-
-(async () => {
-  const options = {{ options|tojson }};
-  try {
-    const credential = await get(options);
-    document.querySelector("#credential").value = JSON.stringify(credential);
-    document.querySelector("#form").submit();
-  } catch (err) {
-    console.error("WebAuthn error", err);
-    alert("No se pudo obtener la credencial WebAuthn:\n" + err.message);
-    // NO enviamos formulario vacío
-  }
-})();
-</script>
+  import { get } from "https://cdn.skypack.dev/@github/webauthn-json";
+  
+  (async () => {
+    const options = {{ options|tojson }};
+    try {
+      // ←——  envolvemos en {publicKey: …}
+      const credential = await get({ publicKey: options });
+      document.querySelector("#credential").value = JSON.stringify(credential);
+      document.querySelector("#form").submit();
+    } catch (err) {
+      console.error("WebAuthn error", err);
+      alert("No se pudo obtener la credencial:\n" + err.message);
+    }
+  })();
+  </script>
+  
 {% endblock %}

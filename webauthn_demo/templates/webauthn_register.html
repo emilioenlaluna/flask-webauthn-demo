@@ -16,20 +16,21 @@
 
 {% block modules %}
 <script type="module">
-import { create } from "https://cdn.skypack.dev/@github/webauthn-json";
-
-document.querySelector("#register").addEventListener("click", async ev => {
-  ev.preventDefault();
-  const options = {{ options|tojson }};
-  try {
-    const credential = await create(options);
-    document.querySelector("#credential").value = JSON.stringify(credential);
-    document.querySelector("#form").submit();
-  } catch (err) {
-    console.error("WebAuthn error", err);
-    alert("No se pudo registrar la llave:\n" + err.message);
-    // NO enviamos formulario vacío
-  }
-});
-</script>
+  import { create } from "https://cdn.skypack.dev/@github/webauthn-json";
+  
+  document.querySelector("#register").addEventListener("click", async ev => {
+    ev.preventDefault();
+    const options = {{ options|tojson }};
+    try {
+      // ←——  envolvemos en {publicKey: …}
+      const credential = await create({ publicKey: options });
+      document.querySelector("#credential").value = JSON.stringify(credential);
+      document.querySelector("#form").submit();
+    } catch (err) {
+      console.error("WebAuthn error", err);
+      alert("No se pudo registrar la llave:\n" + err.message);
+    }
+  });
+  </script>
+  
 {% endblock %}
