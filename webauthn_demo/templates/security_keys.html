@@ -35,7 +35,7 @@
 
 {% block scripts %}
 <script>
-document.querySelectorAll(".date").forEach(el=>{
+document.querySelectorAll(".date").forEach(el => {
   const ts = Number(el.dataset.ts);
   if (ts) el.textContent = new Date(ts*1000).toLocaleString();
 });

@@ -1,5 +1,6 @@
 # webauthn_demo/webauthn.py
 import logging, time, traceback
+import json
 from flask import (
     Blueprint, render_template, redirect, url_for,
     request, flash, session, current_app
@@ -58,9 +59,11 @@ def register():
             ],
         )
         session["challenge"] = options.challenge
+        # Serialize options to JSON string before passing to template
+        options_json = json.dumps(options_to_json(options))
         return render_template(
             "webauthn_register.html",
-            options=options_to_json(options),
+            options_json=options_json,
             key_name=f"Security key #{len(current_user.keys) + 1}",
         )
 
@@ -122,8 +125,10 @@ def login():
             user_verification=UserVerificationRequirement.DISCOURAGED,
         )
         session["challenge"] = options.challenge
-        return render_template("webauthn_login.html", options=options_to_json(options))
-
+        # Serialize options to JSON string before passing to template
+        options_json = json.dumps(options_to_json(options))
+        return render_template("webauthn_login.html", options_json=options_json)
+    
     # ── POST ───────────────────────────────────────────────────────────────────
     session.pop("user_id", None)
     raw = request.form.get("credential", "").strip()
@@ -162,6 +167,7 @@ def login():
     key.last_used = time.time()
     db.session.commit()
     return redirect(url_for("main.index"))
+
 
 
 @bp.route("/webauthn/delete", methods=["POST"])

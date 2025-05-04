@@ -1,4 +1,6 @@
-{% extends 'base.html' %}          {# …encabezado omitido por brevedad #}
+{% extends 'base.html' %}
+
+{# …encabezado omitido por brevedad #}
 {% import 'macros.html' as m %}
 
 {% block content %}
@@ -17,7 +19,8 @@
 <script type="module">
 import { create } from "https://cdn.skypack.dev/@github/webauthn-json";
 
-const options = JSON.parse('{{ options|tojson }}');   // ← des-serializamos
+// Use the pre-serialized JSON string directly
+const options = {{ options_json|safe }};
 
 document.getElementById('register').addEventListener('click', async ev => {
   ev.preventDefault();

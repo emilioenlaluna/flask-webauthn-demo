@@ -1,9 +1,12 @@
 {% extends 'base.html' %}
+
 {% block content %}
 <h2>Login with a Security Key</h2>
+
 <form id="form" method="post">
   <input type="hidden" id="credential" name="credential">
 </form>
+
 <p class="mt-3">Or go <a href="{{ url_for('main.index') }}">back</a>.</p>
 {% endblock %}
 
@@ -11,7 +14,8 @@
 <script type="module">
 import { get } from "https://cdn.skypack.dev/@github/webauthn-json";
 
-const options = JSON.parse('{{ options|tojson }}');   // ← des-serializamos
+// Use the pre-serialized JSON string directly
+const options = {{ options_json|safe }};
 
 (async () => {
   try {
