@@ -37,7 +37,6 @@ def _rp_cfg() -> tuple[str, str]:
 def keys():
     return render_template("security_keys.html")
 
-
 @bp.route("/webauthn/register", methods=["GET", "POST"])
 @login_required
 def register():
@@ -59,11 +58,13 @@ def register():
             ],
         )
         session["challenge"] = options.challenge
-        # Serialize options to JSON string before passing to template
-        options_json = json.dumps(options_to_json(options))
+        
+        # Convert options to JSON and pass it directly to the template
+        options_json = options_to_json(options)
+        
         return render_template(
             "webauthn_register.html",
-            options_json=options_json,
+            options_json=json.dumps(options_json),
             key_name=f"Security key #{len(current_user.keys) + 1}",
         )
 
@@ -104,7 +105,6 @@ def register():
     flash("Llave registrada correctamente.")
     return redirect(url_for("webauthn.keys"))
 
-
 @bp.route("/webauthn/login", methods=["GET", "POST"])
 def login():
     user = load_user(session.get("user_id"))
@@ -125,9 +125,14 @@ def login():
             user_verification=UserVerificationRequirement.DISCOURAGED,
         )
         session["challenge"] = options.challenge
-        # Serialize options to JSON string before passing to template
-        options_json = json.dumps(options_to_json(options))
-        return render_template("webauthn_login.html", options_json=options_json)
+        
+        # Convert options to JSON and pass it directly to the template
+        options_json = options_to_json(options)
+        
+        return render_template(
+            "webauthn_login.html", 
+            options_json=json.dumps(options_json)
+        )
     
     # ── POST ───────────────────────────────────────────────────────────────────
     session.pop("user_id", None)

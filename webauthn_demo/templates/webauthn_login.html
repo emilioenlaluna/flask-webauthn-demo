@@ -14,16 +14,19 @@
 <script type="module">
 import { get } from "https://cdn.skypack.dev/@github/webauthn-json";
 
-// Use the pre-serialized JSON string directly
-const options = {{ options_json|safe }};
+// Parse the options JSON - the object is already the correct format
+const options = JSON.parse({{ options_json|safe }});
+
+console.log("WebAuthn authentication options:", options); // Debug log
 
 (async () => {
   try {
+    // The options object is already in the correct format for the get function
     const credential = await get({ publicKey: options });
     document.getElementById('credential').value = JSON.stringify(credential);
     document.getElementById('form').submit();
   } catch (err) {
-    console.error(err);
+    console.error("WebAuthn authentication error:", err);
     alert("No se pudo obtener la credencial:\n" + err.message);
   }
 })();

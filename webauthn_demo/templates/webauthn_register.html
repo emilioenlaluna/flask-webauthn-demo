@@ -19,17 +19,19 @@
 <script type="module">
 import { create } from "https://cdn.skypack.dev/@github/webauthn-json";
 
-// Use the pre-serialized JSON string directly
-const options = {{ options_json|safe }};
+// Parse the options JSON - the object is already the correct format
+const options = JSON.parse({{ options_json|safe }});
 
 document.getElementById('register').addEventListener('click', async ev => {
   ev.preventDefault();
   try {
+    console.log("WebAuthn options:", options); // Debug log
+    // The options object is already in the correct format for the create function
     const credential = await create({ publicKey: options });
     document.getElementById('credential').value = JSON.stringify(credential);
     document.getElementById('form').submit();
   } catch (err) {
-    console.error(err);
+    console.error("WebAuthn error:", err);
     alert("No se pudo registrar la llave:\n" + err.message);
   }
 });
