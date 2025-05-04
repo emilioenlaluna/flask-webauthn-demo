@@ -1,32 +1,35 @@
 {% extends 'base.html' %}
 {% import 'macros.html' as m %}
+{% block title %}Register · Flask WebAuthn{% endblock %}
 
 {% block content %}
 <h2>Add a Security Key</h2>
 
-<form id="form" method="post" class="mb-3">
+<form id="form" method="post">
   {{ m.form_field('name', 'Key name', value=key_name) }}
   <input type="hidden" id="credential" name="credential">
   <button id="register" class="btn btn-primary">Configure Security Key</button>
 </form>
 
-<p>Or go <a href="{{ url_for('webauthn.keys') }}">back</a>.</p>
+<p class="mt-3">Or go <a href="{{ url_for('webauthn.keys') }}">back</a>.</p>
 {% endblock %}
 
-{% block scripts %}
+{% block modules %}
 <script type="module">
 import { create } from "https://cdn.skypack.dev/@github/webauthn-json";
 
-document.getElementById('register').addEventListener('click', async ev => {
+document.querySelector("#register").addEventListener("click", async ev => {
   ev.preventDefault();
   const options = {{ options|tojson }};
   try {
-    const cred = await create(options);   // objeto JSON-safe
-    document.getElementById('credential').value = JSON.stringify(cred);
+    const credential = await create(options);
+    document.querySelector("#credential").value = JSON.stringify(credential);
+    document.querySelector("#form").submit();
   } catch (err) {
-    console.error(err);                   // seguirá enviando form vacío
+    console.error("WebAuthn error", err);
+    alert("No se pudo registrar la llave:\n" + err.message);
+    // NO enviamos formulario vacío
   }
-  document.getElementById('form').submit();
 });
 </script>
 {% endblock %}

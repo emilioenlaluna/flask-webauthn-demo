@@ -1,19 +1,19 @@
 {% extends 'base.html' %}
+{% block title %}Security Keys{% endblock %}
+
 {% block content %}
 <h2>Security Keys</h2>
 
 {% if current_user.keys %}
-<table class="table table-hover align-middle" style="width:auto">
-  <thead>
-    <tr><th>Name</th><th>Last Use</th><th></th></tr>
-  </thead>
+<table class="table table-hover align-middle w-auto">
+  <thead><tr><th>Name</th><th>Last Use</th><th></th></tr></thead>
   <tbody>
   {% for key in current_user.keys %}
     <tr>
       <td>{{ key.name }}</td>
       <td class="date" data-ts="{{ key.last_used }}"></td>
       <td>
-        <form method="POST" action="{{ url_for('webauthn.delete') }}">
+        <form method="post" action="{{ url_for('webauthn.delete') }}">
           <input type="hidden" name="id" value="{{ key.id }}">
           <button class="btn btn-sm btn-danger">{% include 'svg/trash.svg' %}</button>
         </form>
@@ -26,7 +26,7 @@
 <p>You have no security keys configured.</p>
 {% endif %}
 
-<p>
+<p class="mt-3">
   <a class="btn btn-primary" href="{{ url_for('webauthn.register') }}">
     {% include 'svg/key.svg' %} Add Security Key
   </a>
@@ -35,9 +35,9 @@
 
 {% block scripts %}
 <script>
-document.querySelectorAll('.date').forEach(el=>{
-  if (!el.dataset.ts) return;
-  el.textContent = new Date(el.dataset.ts * 1000).toLocaleString();
+document.querySelectorAll(".date").forEach(el=>{
+  const ts = Number(el.dataset.ts);
+  if (ts) el.textContent = new Date(ts*1000).toLocaleString();
 });
 </script>
 {% endblock %}
