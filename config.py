@@ -8,6 +8,5 @@ class Config:
 
     WEBAUTHN_RP_NAME = 'Flask WebAuthn Demo'
 
-    # config.py (o donde toque)
-    WEBAUTHN_RP_ID       = "ubiquitous-garbanzo-w476wjv9qj929rpp-5000.app.github.dev"
-    WEBAUTHN_RP_ORIGIN   = "https://ubiquitous-garbanzo-w476wjv9qj929rpp-5000.app.github.dev"
+    WEBAUTHN_RP_ID     = "ubiquitous-garbanzo-w476wjv9qj929rpp-5000.app.github.dev"
+    WEBAUTHN_RP_ORIGIN = "https://ubiquitous-garbanzo-w476wjv9qj929rpp-5000.app.github.dev"

@@ -1,6 +1,5 @@
-{% extends 'base.html' %}
+{% extends 'base.html' %}          {# …encabezado omitido por brevedad #}
 {% import 'macros.html' as m %}
-{% block title %}Register · Flask WebAuthn{% endblock %}
 
 {% block content %}
 <h2>Add a Security Key</h2>
@@ -16,21 +15,20 @@
 
 {% block modules %}
 <script type="module">
-  import { create } from "https://cdn.skypack.dev/@github/webauthn-json";
-  
-  document.querySelector("#register").addEventListener("click", async ev => {
-    ev.preventDefault();
-    const options = {{ options|tojson }};
-    try {
-      // ←——  envolvemos en {publicKey: …}
-      const credential = await create({ publicKey: options });
-      document.querySelector("#credential").value = JSON.stringify(credential);
-      document.querySelector("#form").submit();
-    } catch (err) {
-      console.error("WebAuthn error", err);
-      alert("No se pudo registrar la llave:\n" + err.message);
-    }
-  });
-  </script>
-  
+import { create } from "https://cdn.skypack.dev/@github/webauthn-json";
+
+const options = JSON.parse('{{ options|tojson }}');   // ← des-serializamos
+
+document.getElementById('register').addEventListener('click', async ev => {
+  ev.preventDefault();
+  try {
+    const credential = await create({ publicKey: options });
+    document.getElementById('credential').value = JSON.stringify(credential);
+    document.getElementById('form').submit();
+  } catch (err) {
+    console.error(err);
+    alert("No se pudo registrar la llave:\n" + err.message);
+  }
+});
+</script>
 {% endblock %}

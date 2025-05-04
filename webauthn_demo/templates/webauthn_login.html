@@ -1,9 +1,6 @@
 {% extends 'base.html' %}
-{% block title %}Login · Flask WebAuthn{% endblock %}
-
 {% block content %}
 <h2>Login with a Security Key</h2>
-
 <form id="form" method="post">
   <input type="hidden" id="credential" name="credential">
 </form>
@@ -12,20 +9,19 @@
 
 {% block modules %}
 <script type="module">
-  import { get } from "https://cdn.skypack.dev/@github/webauthn-json";
-  
-  (async () => {
-    const options = {{ options|tojson }};
-    try {
-      // ←——  envolvemos en {publicKey: …}
-      const credential = await get({ publicKey: options });
-      document.querySelector("#credential").value = JSON.stringify(credential);
-      document.querySelector("#form").submit();
-    } catch (err) {
-      console.error("WebAuthn error", err);
-      alert("No se pudo obtener la credencial:\n" + err.message);
-    }
-  })();
-  </script>
-  
+import { get } from "https://cdn.skypack.dev/@github/webauthn-json";
+
+const options = JSON.parse('{{ options|tojson }}');   // ← des-serializamos
+
+(async () => {
+  try {
+    const credential = await get({ publicKey: options });
+    document.getElementById('credential').value = JSON.stringify(credential);
+    document.getElementById('form').submit();
+  } catch (err) {
+    console.error(err);
+    alert("No se pudo obtener la credencial:\n" + err.message);
+  }
+})();
+</script>
 {% endblock %}
