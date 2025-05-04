@@ -1,11 +1,10 @@
+# webauthn_demo/webauthn.py
 import logging, time, traceback
-
 from flask import (
     Blueprint, render_template, redirect, url_for,
     request, flash, session, current_app
 )
 from flask_login import login_required, login_user, current_user
-
 from webauthn import (
     generate_registration_options, options_to_json, verify_registration_response,
     generate_authentication_options, verify_authentication_response,
@@ -15,37 +14,26 @@ from webauthn.helpers.structs import (
     UserVerificationRequirement, PublicKeyCredentialDescriptor, AuthenticationCredential,
 )
 from webauthn.helpers import bytes_to_base64url, base64url_to_bytes
-from webauthn.helpers import exceptions as wex      # <── NUEVO
+from webauthn.helpers import exceptions as wex
 
 from .app import db
 from .models import load_user, Key
 
-
 bp = Blueprint("webauthn", __name__)
 
 
-# ────────────────────────────────────────────────────────────────
-#  Utilidades
-# ────────────────────────────────────────────────────────────────
 def _log_exc(msg: str) -> None:
-    """
-    Registra en ERROR la excepción actual con traceback completo.
-    """
     current_app.logger.error("%s\n%s", msg, traceback.format_exc())
 
 
 def _rp_cfg() -> tuple[str, str]:
-    """Devuelve (rp_id, origin) desde la configuración global."""
     cfg = current_app.config
     return cfg["WEBAUTHN_RP_ID"], cfg["WEBAUTHN_RP_ORIGIN"]
 
 
-# ────────────────────────────────────────────────────────────────
-#  Vistas
-# ────────────────────────────────────────────────────────────────
-@bp.route("/keys", methods=["GET"])
+@bp.route("/keys")
 @login_required
-def keys() -> str:
+def keys():
     return render_template("security_keys.html")
 
 
@@ -54,6 +42,7 @@ def keys() -> str:
 def register():
     rp_id, origin = _rp_cfg()
 
+    # ── GET ────────────────────────────────────────────────────────────────────
     if request.method == "GET":
         options = generate_registration_options(
             user_id=str(current_user.id),
@@ -69,16 +58,20 @@ def register():
             ],
         )
         session["challenge"] = options.challenge
-
         return render_template(
             "webauthn_register.html",
             options=options_to_json(options),
             key_name=f"Security key #{len(current_user.keys) + 1}",
         )
 
-    # POST  ─────────────────────────────────────────────────────┐
+    # ── POST ───────────────────────────────────────────────────────────────────
+    raw = request.form.get("credential", "").strip()
+    if not raw:
+        flash("No se recibió ninguna credencial del navegador.")
+        return redirect(url_for("webauthn.register"))
+
     try:
-        credential = RegistrationCredential.parse_raw(request.form["credential"])
+        credential = RegistrationCredential.parse_raw(raw)
         verification = verify_registration_response(
             credential=credential,
             expected_challenge=session.pop("challenge"),
@@ -91,12 +84,10 @@ def register():
         current_app.logger.warning("Registro WebAuthn inválido: %s", e)
         flash(f"Registro inválido: {e}")
         return redirect(url_for("webauthn.register"))
-
     except Exception:
         _log_exc("Excepción inesperada en registro WebAuthn")
         flash("Error inesperado al registrar la llave.")
         return redirect(url_for("webauthn.register"))
-    # ────────────────────────────────────────────────────────────┘
 
     key = Key(
         user=current_user._get_current_object(),
@@ -115,11 +106,12 @@ def register():
 def login():
     user = load_user(session.get("user_id"))
     if not user:
-        flash("Sesión webauthn expirada. Inicia sesión de nuevo.")
+        flash("Sesión WebAuthn expirada. Inicia sesión de nuevo.")
         return redirect(url_for("auth.login"))
 
     rp_id, origin = _rp_cfg()
 
+    # ── GET ────────────────────────────────────────────────────────────────────
     if request.method == "GET":
         options = generate_authentication_options(
             rp_id=rp_id,
@@ -132,15 +124,16 @@ def login():
         session["challenge"] = options.challenge
         return render_template("webauthn_login.html", options=options_to_json(options))
 
-    # POST  ─────────────────────────────────────────────────────┐
-    session.pop("user_id", None)           # ya no lo necesitamos
+    # ── POST ───────────────────────────────────────────────────────────────────
+    session.pop("user_id", None)
+    raw = request.form.get("credential", "").strip()
+    if not raw:
+        flash("No se recibió ninguna credencial del navegador.")
+        return redirect(url_for("main.index"))
 
     try:
-        credential = AuthenticationCredential.parse_raw(request.form["credential"])
-        key = db.session.scalar(
-            Key.select().where(Key.credential_id == credential.id)
-        )
-
+        credential = AuthenticationCredential.parse_raw(raw)
+        key = db.session.scalar(Key.select().where(Key.credential_id == credential.id))
         if not key or key.user != user:
             flash("Llave no asociada a este usuario.")
             return redirect(url_for("main.index"))
@@ -159,14 +152,11 @@ def login():
         current_app.logger.warning("Autenticación WebAuthn inválida: %s", e)
         flash(f"Llave inválida: {e}")
         return redirect(url_for("main.index"))
-
     except Exception:
         _log_exc("Excepción inesperada en autenticación WebAuthn")
         flash("Error inesperado al verificar la llave.")
         return redirect(url_for("main.index"))
-    # ────────────────────────────────────────────────────────────┘
 
-    # Todo OK ➜ login
     login_user(user)
     key.sign_count = verification.new_sign_count
     key.last_used = time.time()
